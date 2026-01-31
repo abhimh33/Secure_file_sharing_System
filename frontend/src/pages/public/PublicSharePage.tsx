@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   FileText,
   Download,
@@ -9,6 +9,7 @@ import {
   Loader2,
   Shield,
   CheckCircle,
+  HardDrive,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { shareApi, getErrorMessage } from '../../api';
@@ -16,8 +17,15 @@ import { shareApi, getErrorMessage } from '../../api';
 export default function PublicSharePage() {
   const { token } = useParams<{ token: string }>();
   const [password, setPassword] = useState('');
-  const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [downloadComplete, setDownloadComplete] = useState(false);
+
+  // Fetch share link info to check if password is required
+  const { data: linkInfo, isLoading: isLoadingInfo, error: infoError } = useQuery({
+    queryKey: ['shareLink', token],
+    queryFn: () => shareApi.getShareLinkInfo(token!),
+    enabled: !!token,
+    retry: false,
+  });
 
   const downloadMutation = useMutation({
     mutationFn: () =>
@@ -38,8 +46,7 @@ export default function PublicSharePage() {
     onError: (error: unknown) => {
       const message = getErrorMessage(error);
       if (message.toLowerCase().includes('password')) {
-        setShowPasswordInput(true);
-        toast.error('This file is password protected');
+        toast.error('Invalid password');
       } else {
         toast.error(message);
       }
@@ -48,7 +55,20 @@ export default function PublicSharePage() {
 
   const handleDownload = () => {
     if (!token) return;
+    // If password is required but not entered, show error
+    if (linkInfo?.has_password && !password) {
+      toast.error('Please enter the password');
+      return;
+    }
     downloadMutation.mutate();
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (!token) {
@@ -61,6 +81,33 @@ export default function PublicSharePage() {
           </h1>
           <p className="text-gray-500">
             This share link is invalid or has been corrupted.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoadingInfo) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="card max-w-md w-full p-8 text-center">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading share link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (infoError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="card max-w-md w-full p-8 text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            Link Not Available
+          </h1>
+          <p className="text-gray-500">
+            This share link has expired, been revoked, or reached its download limit.
           </p>
         </div>
       </div>
@@ -103,27 +150,45 @@ export default function PublicSharePage() {
         ) : (
           <>
             {/* File Info */}
-            <div className="bg-gray-50 rounded-xl p-6 mb-6 text-center">
-              <FileText className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-              <p className="text-gray-600 text-sm">
-                Someone shared a file with you
-              </p>
+            <div className="bg-gray-50 rounded-xl p-6 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <FileText className="w-8 h-8 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-900 truncate">
+                    {linkInfo?.filename || 'Shared File'}
+                  </h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                    <HardDrive className="w-3.5 h-3.5" />
+                    <span>{linkInfo?.size ? formatBytes(linkInfo.size) : 'Unknown size'}</span>
+                  </div>
+                </div>
+              </div>
+              {linkInfo?.has_password && (
+                <div className="mt-3 pt-3 border-t border-gray-200 flex items-center gap-2 text-sm text-amber-600">
+                  <Lock className="w-4 h-4" />
+                  <span>This file is password protected</span>
+                </div>
+              )}
             </div>
 
-            {/* Password Input */}
-            {showPasswordInput && (
+            {/* Password Input - Always show if required */}
+            {linkInfo?.has_password && (
               <div className="mb-4">
-                <label className="label flex items-center gap-2">
+                <label htmlFor="share-password" className="label flex items-center gap-2">
                   <Lock className="w-4 h-4" />
-                  Password Required
+                  Enter Password
                 </label>
                 <input
+                  id="share-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter the password"
+                  placeholder="Enter the password to download"
                   className="input"
                   autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleDownload()}
                 />
               </div>
             )}
@@ -131,7 +196,7 @@ export default function PublicSharePage() {
             {/* Download Button */}
             <button
               onClick={handleDownload}
-              disabled={downloadMutation.isPending}
+              disabled={downloadMutation.isPending || (linkInfo?.has_password && !password)}
               className="btn btn-primary w-full flex items-center justify-center gap-2"
             >
               {downloadMutation.isPending ? (

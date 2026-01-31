@@ -27,6 +27,9 @@ class ShareLink(BaseModel):
     max_downloads = Column(Integer, nullable=True)  # None = unlimited
     download_count = Column(Integer, default=0, nullable=False)
     
+    # Password protection (hashed)
+    password_hash = Column(String(255), nullable=True)
+    
     # Status
     is_active = Column(Boolean, default=True, nullable=False)
     
@@ -56,3 +59,8 @@ class ShareLink(BaseModel):
         if self.max_downloads and self.download_count >= self.max_downloads:
             return False
         return True
+    
+    @property
+    def has_password(self) -> bool:
+        """Check if link has password protection"""
+        return self.password_hash is not None

@@ -12,6 +12,7 @@ class ShareLinkCreate(BaseModel):
     file_id: int
     expiry_minutes: int = Field(..., ge=1, le=43200)  # 1 min to 30 days
     max_downloads: Optional[int] = Field(None, ge=1)
+    password: Optional[str] = Field(None, min_length=1)  # Password protection
     requires_auth: bool = False
     allowed_email: Optional[str] = None
     
@@ -33,6 +34,7 @@ class ShareLinkResponse(BaseModel):
     expires_at: datetime
     expires_in_minutes: int
     max_downloads: Optional[int] = None
+    has_password: bool = False
     requires_auth: bool = False
     created_at: Optional[datetime] = None
     
@@ -51,6 +53,7 @@ class ShareLinkInfo(BaseModel):
     is_valid: bool
     download_count: int
     max_downloads: Optional[int] = None
+    has_password: bool = False
 
 
 class ShareLinkValidation(BaseModel):
@@ -71,6 +74,7 @@ class ShareLinkListResponse(BaseModel):
     is_active: bool
     download_count: int
     max_downloads: Optional[int] = None
+    has_password: bool = False
     created_at: Optional[datetime] = None
     
     class Config:

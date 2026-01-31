@@ -1,6 +1,19 @@
 import { api } from './client';
 import type { ShareLink, ShareLinkCreate, ShareLinkResponse } from '../types';
 
+export interface ShareLinkInfo {
+  token: string;
+  file_id: number;
+  filename: string;
+  content_type: string;
+  size: number;
+  expires_at: string;
+  is_valid: boolean;
+  download_count: number;
+  max_downloads: number | null;
+  has_password: boolean;
+}
+
 export const shareApi = {
   createShareLink: async (data: ShareLinkCreate): Promise<ShareLinkResponse> => {
     // Convert expires_in_days to expiry_minutes for the backend
@@ -8,6 +21,7 @@ export const shareApi = {
       file_id: data.file_id,
       expiry_minutes: data.expires_in_days ? data.expires_in_days * 24 * 60 : data.expiry_minutes || 60,
       max_downloads: data.max_downloads,
+      password: data.password,
       requires_auth: data.requires_auth,
     };
     const response = await api.post<ShareLinkResponse>('/share/', payload);
@@ -25,8 +39,8 @@ export const shareApi = {
     }));
   },
 
-  getShareLinkInfo: async (token: string) => {
-    const response = await api.get(`/share/${token}/info`);
+  getShareLinkInfo: async (token: string): Promise<ShareLinkInfo> => {
+    const response = await api.get<ShareLinkInfo>(`/share/${token}/info`);
     return response.data;
   },
 

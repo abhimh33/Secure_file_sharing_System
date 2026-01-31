@@ -84,6 +84,7 @@ async def get_share_link_info(
 async def download_via_share_link(
     token: str,
     request: Request,
+    password: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """
@@ -91,6 +92,7 @@ async def download_via_share_link(
     
     - Validates link expiration (Redis TTL)
     - Checks download limits
+    - Verifies password if required
     - Streams file through backend
     
     Authentication is optional unless link requires it.
@@ -112,6 +114,7 @@ async def download_via_share_link(
     # Get file info via share link
     file_info = share_service.download_via_share_link(
         token=token,
+        password=password,
         user=current_user,
         request=request
     )

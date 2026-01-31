@@ -6,6 +6,7 @@ Uses Redis for TTL-based expiration
 
 import uuid
 import json
+import bcrypt
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from typing import Optional, Dict
@@ -34,6 +35,14 @@ class ShareLinkService:
     def _generate_token(self) -> str:
         """Generate unique share token"""
         return uuid.uuid4().hex
+    
+    def _hash_password(self, password: str) -> str:
+        """Hash password using bcrypt"""
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    def _verify_password(self, password: str, password_hash: str) -> bool:
+        """Verify password against hash"""
+        return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
     
     def create_share_link(
         self,
@@ -67,6 +76,11 @@ class ShareLinkService:
         expiry_seconds = link_data.expiry_minutes * 60
         expires_at = datetime.utcnow() + timedelta(minutes=link_data.expiry_minutes)
         
+        # Hash password if provided
+        password_hash = None
+        if link_data.password:
+            password_hash = self._hash_password(link_data.password)
+        
         # Store in Redis with TTL
         redis_data = {
             "file_id": file.id,
@@ -79,6 +93,7 @@ class ShareLinkService:
             "expires_at": expires_at.isoformat(),
             "max_downloads": link_data.max_downloads,
             "download_count": 0,
+            "password_hash": password_hash,
             "requires_auth": link_data.requires_auth,
             "allowed_email": link_data.allowed_email
         }
@@ -99,6 +114,7 @@ class ShareLinkService:
             created_by_id=user.id,
             expires_at=expires_at,
             max_downloads=link_data.max_downloads,
+            password_hash=password_hash,
             requires_auth=link_data.requires_auth,
             allowed_email=link_data.allowed_email
         )
@@ -126,6 +142,7 @@ class ShareLinkService:
             "expires_at": expires_at,
             "expires_in_minutes": link_data.expiry_minutes,
             "max_downloads": link_data.max_downloads,
+            "has_password": password_hash is not None,
             "requires_auth": link_data.requires_auth,
             "created_at": share_link.created_at
         }
@@ -172,7 +189,8 @@ class ShareLinkService:
             expires_at=datetime.fromisoformat(data["expires_at"]),
             is_valid=True,
             download_count=data.get("download_count", 0),
-            max_downloads=data.get("max_downloads")
+            max_downloads=data.get("max_downloads"),
+            has_password=data.get("password_hash") is not None
         )
     
     def increment_download_count(self, token: str) -> bool:
@@ -206,6 +224,7 @@ class ShareLinkService:
     def download_via_share_link(
         self,
         token: str,
+        password: Optional[str] = None,
         user: Optional[User] = None,
         request: Optional[Request] = None
     ) -> Dict:
@@ -221,6 +240,19 @@ class ShareLinkService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Share link not found, expired, or download limit reached"
             )
+        
+        # Check password if required
+        if data.get("password_hash"):
+            if not password:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Password required to access this file"
+                )
+            if not self._verify_password(password, data["password_hash"]):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid password"
+                )
         
         # Check authentication requirement
         if data.get("requires_auth") and not user:
