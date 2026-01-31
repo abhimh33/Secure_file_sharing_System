@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Redis for caching and expiring share links
+  redis:
+    image: redis:7-alpine
+    container_name: secure_file_sharing_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL (optional - you're using local)
+  # Uncomment if you want to use Docker for PostgreSQL
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: secure_file_sharing_postgres
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: AbhiMH33
+  #     POSTGRES_DB: SECUREFILE_SHARING_APPLICATION
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   restart: unless-stopped
+
+volumes:
+  redis_data:
+  # postgres_data:
