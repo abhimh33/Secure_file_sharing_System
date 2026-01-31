@@ -147,8 +147,8 @@ class ShareLinkService:
             "created_at": share_link.created_at
         }
     
-    def validate_share_link(self, token: str) -> Optional[Dict]:
-        """Validate a share link and return file info if valid"""
+    def _get_share_data(self, token: str) -> Optional[Dict]:
+        """Get share link data from Redis or database without validation"""
         redis_key = f"{self.REDIS_PREFIX}{token}"
         data = self.redis.get(redis_key)
         
@@ -163,21 +163,44 @@ class ShareLinkService:
                     return None
             return None
         
-        # Check max downloads
+        return data
+    
+    def _is_download_limit_reached(self, data: Dict) -> bool:
+        """Check if download limit has been reached"""
         if data.get("max_downloads"):
             if data.get("download_count", 0) >= data["max_downloads"]:
-                return None
+                return True
+        return False
+    
+    def validate_share_link(self, token: str) -> Optional[Dict]:
+        """Validate a share link and return file info if valid"""
+        data = self._get_share_data(token)
+        
+        if not data:
+            return None
+        
+        # Check max downloads
+        if self._is_download_limit_reached(data):
+            return None
         
         return data
     
     def get_share_link_info(self, token: str) -> ShareLinkInfo:
         """Get detailed information about a share link"""
-        data = self.validate_share_link(token)
+        # First get raw data to check specific error conditions
+        data = self._get_share_data(token)
         
         if not data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Share link not found or expired"
+            )
+        
+        # Check if download limit reached (specific error message)
+        if self._is_download_limit_reached(data):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Download limit reached. Contact the file owner."
             )
         
         return ShareLinkInfo(
@@ -232,13 +255,20 @@ class ShareLinkService:
         Download file via share link
         Returns file info for streaming
         """
-        # Validate link
-        data = self.validate_share_link(token)
+        # First get raw data to check specific error conditions
+        data = self._get_share_data(token)
         
         if not data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Share link not found, expired, or download limit reached"
+                detail="Share link not found or expired"
+            )
+        
+        # Check if download limit reached (specific error message)
+        if self._is_download_limit_reached(data):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Download limit reached. Contact the file owner."
             )
         
         # Check password if required

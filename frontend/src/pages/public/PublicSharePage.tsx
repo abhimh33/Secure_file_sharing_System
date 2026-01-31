@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -47,6 +47,8 @@ export default function PublicSharePage() {
       const message = getErrorMessage(error);
       if (message.toLowerCase().includes('password')) {
         toast.error('Invalid password');
+      } else if (message.toLowerCase().includes('download limit')) {
+        toast.error('Download limit reached. Contact the file owner.');
       } else {
         toast.error(message);
       }
@@ -99,15 +101,21 @@ export default function PublicSharePage() {
   }
 
   if (infoError) {
+    // Check if it's a download limit error
+    const errorMessage = getErrorMessage(infoError);
+    const isDownloadLimitReached = errorMessage.toLowerCase().includes('download limit');
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="card max-w-md w-full p-8 text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <AlertCircle className={`w-16 h-16 mx-auto mb-4 ${isDownloadLimitReached ? 'text-amber-500' : 'text-red-500'}`} />
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            Link Not Available
+            {isDownloadLimitReached ? 'Download Limit Reached' : 'Link Not Available'}
           </h1>
           <p className="text-gray-500">
-            This share link has expired, been revoked, or reached its download limit.
+            {isDownloadLimitReached 
+              ? 'Download limit reached. Contact the file owner.'
+              : 'This share link has expired or been revoked.'}
           </p>
         </div>
       </div>
