@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -15,16 +15,31 @@ import {
   FileAudio,
   File,
   X,
-  Link as LinkIcon,
   Calendar,
   Eye,
   Copy,
   Check,
+  Lock,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { filesApi, shareApi, getErrorMessage } from '../../api';
 import type { FileItem } from '../../types';
 import FileUpload from '../../components/files/FileUpload';
+
+// Password validation function
+const validatePassword = (password: string) => {
+  const requirements = {
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+  const isValid = Object.values(requirements).every(Boolean);
+  return { requirements, isValid };
+};
 
 export default function FilesPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,8 +49,12 @@ export default function FilesPage() {
   const [shareExpiry, setShareExpiry] = useState(7);
   const [shareMaxDownloads, setShareMaxDownloads] = useState<number | undefined>(undefined);
   const [sharePassword, setSharePassword] = useState('');
+  const [showPasswordField, setShowPasswordField] = useState(false);
   const [createdShareLink, setCreatedShareLink] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+
+  // Password validation
+  const passwordValidation = useMemo(() => validatePassword(sharePassword), [sharePassword]);
 
   const queryClient = useQueryClient();
 
@@ -61,7 +80,7 @@ export default function FilesPage() {
         file_id: fileId,
         expires_in_days: shareExpiry,
         max_downloads: shareMaxDownloads,
-        password: sharePassword || undefined,
+        password: showPasswordField && sharePassword ? sharePassword : undefined,
       }),
     onSuccess: (shareLink) => {
       queryClient.invalidateQueries({ queryKey: ['shareLinks'] });
@@ -102,12 +121,18 @@ export default function FilesPage() {
     setShareExpiry(7);
     setShareMaxDownloads(undefined);
     setSharePassword('');
+    setShowPasswordField(false);
     setCreatedShareLink(null);
     setShowShareModal(true);
   };
 
   const handleCreateShare = () => {
     if (selectedFile) {
+      // Validate password if provided
+      if (showPasswordField && sharePassword && !passwordValidation.isValid) {
+        toast.error('Please enter a strong password that meets all requirements');
+        return;
+      }
       createShareMutation.mutate(selectedFile.id);
     }
   };
@@ -393,23 +418,95 @@ export default function FilesPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="share-password" className="label flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4" />
-                    Password (optional)
-                  </label>
-                  <input
-                    id="share-password"
-                    type="password"
-                    value={sharePassword}
-                    onChange={(e) => setSharePassword(e.target.value)}
-                    placeholder="Add password protection"
-                    className="input"
-                  />
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="label flex items-center gap-2 mb-0">
+                      <Lock className="w-4 h-4" />
+                      Password Protection
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPasswordField(!showPasswordField);
+                        if (showPasswordField) setSharePassword('');
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        showPasswordField ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
+                      aria-label="Toggle password protection"
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          showPasswordField ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  
+                  {showPasswordField && (
+                    <div className="space-y-3">
+                      <input
+                        id="share-password"
+                        type="password"
+                        value={sharePassword}
+                        onChange={(e) => setSharePassword(e.target.value)}
+                        placeholder="Enter a strong password"
+                        className={`input ${sharePassword && !passwordValidation.isValid ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
+                        autoFocus
+                      />
+                      
+                      {/* Password Requirements */}
+                      <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+                        <p className="text-xs font-medium text-gray-700 mb-2">Password must contain:</p>
+                        <div className="grid grid-cols-2 gap-1.5 text-xs">
+                          <div className={`flex items-center gap-1.5 ${passwordValidation.requirements.minLength ? 'text-green-600' : 'text-gray-500'}`}>
+                            {passwordValidation.requirements.minLength ? (
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            ) : (
+                              <AlertCircle className="w-3.5 h-3.5" />
+                            )}
+                            At least 8 characters
+                          </div>
+                          <div className={`flex items-center gap-1.5 ${passwordValidation.requirements.hasUppercase ? 'text-green-600' : 'text-gray-500'}`}>
+                            {passwordValidation.requirements.hasUppercase ? (
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            ) : (
+                              <AlertCircle className="w-3.5 h-3.5" />
+                            )}
+                            One uppercase letter
+                          </div>
+                          <div className={`flex items-center gap-1.5 ${passwordValidation.requirements.hasLowercase ? 'text-green-600' : 'text-gray-500'}`}>
+                            {passwordValidation.requirements.hasLowercase ? (
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            ) : (
+                              <AlertCircle className="w-3.5 h-3.5" />
+                            )}
+                            One lowercase letter
+                          </div>
+                          <div className={`flex items-center gap-1.5 ${passwordValidation.requirements.hasNumber ? 'text-green-600' : 'text-gray-500'}`}>
+                            {passwordValidation.requirements.hasNumber ? (
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            ) : (
+                              <AlertCircle className="w-3.5 h-3.5" />
+                            )}
+                            One number
+                          </div>
+                          <div className={`flex items-center gap-1.5 ${passwordValidation.requirements.hasSpecial ? 'text-green-600' : 'text-gray-500'}`}>
+                            {passwordValidation.requirements.hasSpecial ? (
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            ) : (
+                              <AlertCircle className="w-3.5 h-3.5" />
+                            )}
+                            One special character
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <button
                   onClick={handleCreateShare}
-                  disabled={createShareMutation.isPending}
+                  disabled={createShareMutation.isPending || (showPasswordField && !!sharePassword && !passwordValidation.isValid)}
                   className="btn btn-primary w-full flex items-center justify-center gap-2"
                 >
                   {createShareMutation.isPending ? (
