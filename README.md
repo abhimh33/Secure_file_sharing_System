@@ -86,7 +86,7 @@ The `.env` file is already configured. Update if needed:
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=AbhiMH33
+POSTGRES_PASSWORD=POSTGRES_PASSWORD
 POSTGRES_DB=SECUREFILE_SHARING_APPLICATION
 
 # Redis
@@ -100,7 +100,7 @@ AWS_REGION=ap-south-2
 S3_BUCKET_NAME=your-bucket-name
 
 # JWT
-JWT_SECRET_KEY=AbhiMH33
+JWT_SECRET_KEY=SECRETKEY
 ACCESS_TOKEN_EXPIRE_MINUTES=20
 REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
@@ -287,7 +287,7 @@ docker-compose logs -f app
 On first startup, a default admin user is created:
 
 - **Email**: admin@securefile.com
-- **Password**: AbhiMH33
+- **Password**: ADMINPASSWORD
 
 ⚠️ **Change this password in production!**
 
