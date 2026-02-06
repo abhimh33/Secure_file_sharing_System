@@ -203,6 +203,69 @@ class AuthService:
         )
         
         return True
+    
+    def forgot_password(
+        self,
+        email: str,
+        request: Optional[Request] = None
+    ) -> bool:
+        """
+        Handle forgot password request.
+        In production, this would:
+        1. Generate a password reset token
+        2. Store token in Redis with TTL
+        3. Send email with reset link
+        
+        For now, we just log the request (no email sending)
+        """
+        # Check if user exists (but don't reveal this to the caller)
+        user = self.db.query(User).filter(User.email == email).first()
+        
+        if user:
+            # Log password reset request
+            self.audit_service.log(
+                action=AuditAction.PASSWORD_RESET_REQUEST,
+                user_id=user.id,
+                user_email=user.email,
+                resource_type="auth",
+                details=f"Password reset requested for: {email}",
+                request=request
+            )
+            
+            # In production: generate token and send email
+            # reset_token = secrets.token_urlsafe(32)
+            # redis_client.set(f"password_reset:{reset_token}", user.id, ex=3600)
+            # send_reset_email(email, reset_token)
+        
+        # Always return True for security (don't reveal if email exists)
+        return True
+    
+    def reset_password(
+        self,
+        token: str,
+        new_password: str,
+        request: Optional[Request] = None
+    ) -> bool:
+        """
+        Reset password using token.
+        In production, this would:
+        1. Validate token from Redis
+        2. Update user password
+        3. Invalidate token
+        
+        For now, returns an error since email/token system is not implemented
+        """
+        from fastapi import HTTPException, status
+        
+        # In production: validate token and get user_id from Redis
+        # user_id = redis_client.get(f"password_reset:{token}")
+        # if not user_id:
+        #     raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+        
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Password reset via email is not yet configured. Please contact the administrator."
+        )
 
 
 def get_auth_service(db: Session) -> AuthService:

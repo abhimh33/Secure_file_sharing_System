@@ -10,7 +10,9 @@ from app.schemas.auth import (
     Token,
     LoginRequest,
     RegisterRequest,
-    RefreshTokenRequest
+    RefreshTokenRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest
 )
 from app.schemas.user import UserResponse
 from app.schemas.common import MessageResponse
@@ -137,3 +139,55 @@ async def get_me(
     Get current authenticated user's information.
     """
     return UserResponse.model_validate(current_user)
+
+
+@router.post(
+    "/forgot-password",
+    response_model=MessageResponse,
+    summary="Request password reset"
+)
+async def forgot_password(
+    request_data: ForgotPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: bool = Depends(rate_limiter)
+):
+    """
+    Request a password reset link.
+    
+    - **email**: User's registered email address
+    
+    For security, always returns success even if email doesn't exist.
+    In production, this would send an email with reset instructions.
+    """
+    auth_service = AuthService(db)
+    auth_service.forgot_password(request_data.email, request)
+    
+    return MessageResponse(
+        message="If this email is registered, password reset instructions have been sent."
+    )
+
+
+@router.post(
+    "/reset-password",
+    response_model=MessageResponse,
+    summary="Reset password with token"
+)
+async def reset_password(
+    request_data: ResetPasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: bool = Depends(rate_limiter)
+):
+    """
+    Reset password using the reset token.
+    
+    - **token**: Password reset token from email
+    - **new_password**: New password (min 8 chars, strong)
+    
+    Returns success message if password was reset.
+    """
+    auth_service = AuthService(db)
+    auth_service.reset_password(request_data.token, request_data.new_password, request)
+    
+    return MessageResponse(message="Password has been reset successfully.")

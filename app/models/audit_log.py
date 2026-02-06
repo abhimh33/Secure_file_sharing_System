@@ -17,6 +17,7 @@ class AuditAction(str, enum.Enum):
     LOGOUT = "logout"
     TOKEN_REFRESH = "token_refresh"
     PASSWORD_CHANGE = "password_change"
+    PASSWORD_RESET_REQUEST = "password_reset_request"
     
     # User management
     USER_CREATE = "user_create"

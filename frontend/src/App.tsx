@@ -9,6 +9,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 
 // Dashboard Pages
 import DashboardPage from './pages/dashboard/DashboardPage';
@@ -40,6 +41,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/share/:token" element={<PublicSharePage />} />
 
           {/* Protected Routes */}

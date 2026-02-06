@@ -129,6 +129,16 @@ export default function LoginPage() {
               )}
             </div>
 
+            {/* Forgot Password Link */}
+            <div className="text-right">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
@@ -160,10 +170,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Demo credentials */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            Demo: admin@securefile.com / AbhiMH33
+        {/* Demo credentials hint */}
+        <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <p className="text-xs text-blue-700 font-medium mb-1">Demo Credentials:</p>
+          <p className="text-xs text-blue-600">
+            Email: demo@securefile.com<br />
+            Password: Demo@1234
           </p>
         </div>
       </div>

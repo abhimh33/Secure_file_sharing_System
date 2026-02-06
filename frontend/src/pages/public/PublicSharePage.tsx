@@ -114,7 +114,7 @@ export default function PublicSharePage() {
           </h1>
           <p className="text-gray-500">
             {isDownloadLimitReached 
-              ? 'Download limit reached. Contact the file owner.'
+              ? 'Maximum download reached! Please contact Admin.'
               : 'This share link has expired or been revoked.'}
           </p>
         </div>

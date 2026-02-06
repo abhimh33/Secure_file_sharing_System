@@ -41,3 +41,14 @@ class RegisterRequest(BaseModel):
 class LogoutRequest(BaseModel):
     """Logout request (optional - for blacklisting tokens)"""
     refresh_token: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Forgot password request"""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password request"""
+    token: str
+    new_password: str
