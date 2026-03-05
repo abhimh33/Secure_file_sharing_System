@@ -130,54 +130,41 @@ graph TB
 ### Backend Layered Architecture
 
 ```mermaid
-graph LR
-    subgraph PRESENTATION["📡 Presentation Layer"]
-        direction TB
-        E1["auth.py"]
-        E2["users.py"]
-        E3["files.py"]
-        E4["share.py"]
-        E5["audit.py"]
-        E6["health.py"]
+graph TB
+    subgraph PRESENTATION["📡 Presentation Layer — API Endpoints"]
+        direction LR
+        E1["auth.py"] ~~~ E2["users.py"] ~~~ E3["files.py"]
+        E4["share.py"] ~~~ E5["audit.py"] ~~~ E6["health.py"]
     end
 
-    subgraph SCHEMA["📐 Validation Layer"]
-        direction TB
-        S1["AuthSchemas"]
-        S2["UserSchemas"]
-        S3["FileSchemas"]
-        S4["ShareSchemas"]
-        S5["AuditSchemas"]
+    subgraph SCHEMA["📐 Validation Layer — Pydantic Schemas"]
+        direction LR
+        S1["AuthSchemas"] ~~~ S2["UserSchemas"] ~~~ S3["FileSchemas"]
+        S4["ShareSchemas"] ~~~ S5["AuditSchemas"]
     end
 
-    subgraph SERVICE["⚙️ Service Layer"]
-        direction TB
-        SVC1["AuthService"]
-        SVC2["UserService"]
-        SVC3["FileService"]
-        SVC4["ShareService"]
-        SVC5["AuditService"]
+    subgraph SERVICE["⚙️ Service Layer — Business Logic"]
+        direction LR
+        SVC1["AuthService"] ~~~ SVC2["UserService"] ~~~ SVC3["FileService"]
+        SVC4["ShareService"] ~~~ SVC5["AuditService"]
     end
 
-    subgraph DOMAIN["📦 Domain Layer"]
-        direction TB
-        M1["User Model"]
-        M2["Role Model"]
-        M3["File Model"]
-        M4["FilePermission"]
-        M5["ShareLink"]
-        M6["AuditLog"]
+    subgraph DOMAIN["📦 Domain Layer — SQLAlchemy Models"]
+        direction LR
+        M1["User"] ~~~ M2["Role"] ~~~ M3["File"]
+        M4["FilePermission"] ~~~ M5["ShareLink"] ~~~ M6["AuditLog"]
     end
 
-    subgraph INFRA["🔧 Infrastructure Layer"]
-        direction TB
-        DB["database.py<br/><i>SQLAlchemy Engine</i>"]
-        RD["redis.py<br/><i>Redis Client</i>"]
-        S3["s3.py<br/><i>Boto3 S3 Client</i>"]
-        CFG["config.py<br/><i>Pydantic Settings</i>"]
+    subgraph INFRA["🔧 Infrastructure Layer — External Connectors"]
+        direction LR
+        DB["database.py<br/>SQLAlchemy Engine"] ~~~ RD["redis.py<br/>Redis Client"]
+        S3["s3.py<br/>Boto3 S3 Client"] ~~~ CFG["config.py<br/>Pydantic Settings"]
     end
 
-    PRESENTATION --> SCHEMA --> SERVICE --> DOMAIN --> INFRA
+    PRESENTATION ==> SCHEMA
+    SCHEMA ==> SERVICE
+    SERVICE ==> DOMAIN
+    DOMAIN ==> INFRA
 
     style PRESENTATION fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,color:#000
     style SCHEMA fill:#FFF8E1,stroke:#F9A825,stroke-width:2px,color:#000
@@ -199,7 +186,7 @@ sequenceDiagram
     participant R as ⚡ Redis
     participant A as 📝 Audit Log
 
-    rect rgb(232, 245, 233)
+    rect rgba(200, 230, 201, 0.3)
         Note over C,A: Registration Flow
         C->>F: POST /auth/register {email, password, name}
         F->>F: Validate via Pydantic schema
@@ -210,7 +197,7 @@ sequenceDiagram
         F-->>C: 201 Created {user_id, email}
     end
 
-    rect rgb(227, 242, 253)
+    rect rgba(187, 222, 251, 0.3)
         Note over C,A: Login Flow
         C->>F: POST /auth/login {email, password}
         F->>DB: Fetch user by email
@@ -221,7 +208,7 @@ sequenceDiagram
         F-->>C: 200 OK {access_token, refresh_token}
     end
 
-    rect rgb(255, 243, 224)
+    rect rgba(255, 236, 179, 0.3)
         Note over C,A: Authenticated Request
         C->>F: GET /files/ [Bearer access_token]
         F->>JWT: Verify & decode token
@@ -232,7 +219,7 @@ sequenceDiagram
         F-->>C: 200 OK [files]
     end
 
-    rect rgb(252, 228, 236)
+    rect rgba(248, 187, 208, 0.3)
         Note over C,A: Token Refresh
         C->>F: POST /auth/refresh {refresh_token}
         F->>JWT: Validate refresh token
@@ -254,7 +241,7 @@ sequenceDiagram
     participant DB as 🐘 PostgreSQL
     participant A as 📝 Audit Log
 
-    rect rgb(232, 245, 233)
+    rect rgba(200, 230, 201, 0.3)
         Note over C,A: Upload Flow
         C->>F: POST /files/upload [multipart/form-data]
         F->>V: Validate file size (≤200 MB)
@@ -267,7 +254,7 @@ sequenceDiagram
         F-->>C: 201 Created {file_id, metadata}
     end
 
-    rect rgb(227, 242, 253)
+    rect rgba(187, 222, 251, 0.3)
         Note over C,A: Download Flow (Owner / Permitted User)
         C->>F: GET /files/{id}/download [Bearer token]
         F->>DB: Verify ownership OR permission
@@ -277,7 +264,7 @@ sequenceDiagram
         F-->>C: 200 OK [StreamingResponse]
     end
 
-    rect rgb(255, 243, 224)
+    rect rgba(255, 236, 179, 0.3)
         Note over C,A: Download Flow (Share Link)
         C->>F: GET /share/{token}/download
         F->>DB: Validate share link record
