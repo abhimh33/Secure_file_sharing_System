@@ -62,10 +62,9 @@
 
 ## 📸 Demo Screenshots
 
-> **Note:** Place your screenshot images in the `docs/screenshots/` folder using the filenames listed below.
-
-### Home & Authentication
-
+<details>
+<summary><b>🔐 Home & Authentication</b></summary>
+<br/>
 <table>
   <tr>
     <td align="center" width="50%">
@@ -80,9 +79,11 @@
     </td>
   </tr>
 </table>
+</details>
 
-### Dashboard & File Management
-
+<details>
+<summary><b>📊 Dashboard & File Management</b></summary>
+<br/>
 <table>
   <tr>
     <td align="center" width="50%">
@@ -97,26 +98,25 @@
     </td>
   </tr>
 </table>
+</details>
 
-### File Upload & Details
-
+<details>
+<summary><b>📄 Uploaded File with Notes</b></summary>
+<br/>
 <table>
   <tr>
-    <td align="center" width="50%">
-      <img src="docs/screenshots/05_file_upload.png" alt="File Upload" width="100%"/>
-      <br/><b>File Upload</b><br/>
-      <sub>Drag-and-drop upload with notes/description</sub>
-    </td>
-    <td align="center" width="50%">
+    <td align="center" width="60%">
       <img src="docs/screenshots/06_uploaded_file_details.png" alt="Uploaded File Details" width="100%"/>
-      <br/><b>Uploaded File with Notes</b><br/>
+      <br/><b>Uploaded File Details</b><br/>
       <sub>File metadata, size, type, and attached notes</sub>
     </td>
   </tr>
 </table>
+</details>
 
-### Share Links
-
+<details>
+<summary><b>🔗 Share Links</b></summary>
+<br/>
 <table>
   <tr>
     <td align="center" width="50%">
@@ -131,9 +131,11 @@
     </td>
   </tr>
 </table>
+</details>
 
-### Download & Access Control
-
+<details>
+<summary><b>⬇️ Download & Access Control</b></summary>
+<br/>
 <table>
   <tr>
     <td align="center" width="50%">
@@ -149,32 +151,30 @@
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/screenshots/11_download_limit_error.png" alt="Download Limit Reached" width="100%"/>
-      <br/><b>Download Limit Reached</b><br/>
-      <sub>Error when max download count is exceeded</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/screenshots/12_expired_link_error.png" alt="Expired Link Error" width="100%"/>
-      <br/><b>Expired Link Error</b><br/>
-      <sub>Error message for expired share links</sub>
-    </td>
-  </tr>
-</table>
-
-### Settings
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/screenshots/13_settings.png" alt="Settings Page" width="100%"/>
-      <br/><b>Settings</b><br/>
-      <sub>User profile and account settings</sub>
+      <img src="docs/screenshots/11_download_limit_error.png" alt="Download Limit / Expired Link Error" width="100%"/>
+      <br/><b>Download Limit Reached / Link Expired</b><br/>
+      <sub>Error displayed when max downloads exceeded or link has expired</sub>
     </td>
     <td align="center" width="50%">
       &nbsp;
     </td>
   </tr>
 </table>
+</details>
+
+<details>
+<summary><b>⚙️ Settings</b></summary>
+<br/>
+<table>
+  <tr>
+    <td align="center" width="60%">
+      <img src="docs/screenshots/13_settings.png" alt="Settings Page" width="100%"/>
+      <br/><b>Settings</b><br/>
+      <sub>User profile and account settings</sub>
+    </td>
+  </tr>
+</table>
+</details>
 
 ---
 
