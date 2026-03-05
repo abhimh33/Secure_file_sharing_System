@@ -21,6 +21,7 @@
 ## 📑 Table of Contents
 
 - [Features](#-features)
+- [Demo Screenshots](#-demo-screenshots)
 - [System Architecture](#-system-architecture)
   - [High-Level Overview](#high-level-system-overview)
   - [Backend Layered Architecture](#backend-layered-architecture)
@@ -56,6 +57,124 @@
 | **Rate Limiting** | Redis-based Throttling | 60 req/min per IP to mitigate abuse |
 | **Frontend** | React 19 SPA | Modern dashboard with Tailwind CSS, React Query, and Zustand |
 | **Validation** | Pydantic v2 Schemas | Strict input/output validation on every endpoint |
+
+---
+
+## 📸 Demo Screenshots
+
+> **Note:** Place your screenshot images in the `docs/screenshots/` folder using the filenames listed below.
+
+### Home & Authentication
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/01_login.png" alt="Login Page" width="100%"/>
+      <br/><b>Login Page</b><br/>
+      <sub>Secure JWT-based authentication with email & password</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/02_register.png" alt="Register Page" width="100%"/>
+      <br/><b>Register Page</b><br/>
+      <sub>New user registration with password strength validation</sub>
+    </td>
+  </tr>
+</table>
+
+### Dashboard & File Management
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/03_dashboard.png" alt="Dashboard" width="100%"/>
+      <br/><b>Dashboard</b><br/>
+      <sub>Overview of files, shares, and recent activity</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/04_my_files.png" alt="My Files" width="100%"/>
+      <br/><b>My Files</b><br/>
+      <sub>Upload, browse, and manage your files</sub>
+    </td>
+  </tr>
+</table>
+
+### File Upload & Details
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/05_file_upload.png" alt="File Upload" width="100%"/>
+      <br/><b>File Upload</b><br/>
+      <sub>Drag-and-drop upload with notes/description</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/06_uploaded_file_details.png" alt="Uploaded File Details" width="100%"/>
+      <br/><b>Uploaded File with Notes</b><br/>
+      <sub>File metadata, size, type, and attached notes</sub>
+    </td>
+  </tr>
+</table>
+
+### Share Links
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/07_create_share_link.png" alt="Create Share Link" width="100%"/>
+      <br/><b>Create Shareable Link</b><br/>
+      <sub>Set max downloads, expiration time & password protection</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/08_share_links_list.png" alt="Share Links List" width="100%"/>
+      <br/><b>Share Links Management</b><br/>
+      <sub>View, copy, and revoke active share links</sub>
+    </td>
+  </tr>
+</table>
+
+### Download & Access Control
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/09_download_password.png" alt="Download with Password" width="100%"/>
+      <br/><b>Password-Protected Download</b><br/>
+      <sub>Enter password to access shared file</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/10_download_complete.png" alt="Download Complete" width="100%"/>
+      <br/><b>Download Complete</b><br/>
+      <sub>Successful file download confirmation</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/11_download_limit_error.png" alt="Download Limit Reached" width="100%"/>
+      <br/><b>Download Limit Reached</b><br/>
+      <sub>Error when max download count is exceeded</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/12_expired_link_error.png" alt="Expired Link Error" width="100%"/>
+      <br/><b>Expired Link Error</b><br/>
+      <sub>Error message for expired share links</sub>
+    </td>
+  </tr>
+</table>
+
+### Settings
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/13_settings.png" alt="Settings Page" width="100%"/>
+      <br/><b>Settings</b><br/>
+      <sub>User profile and account settings</sub>
+    </td>
+    <td align="center" width="50%">
+      &nbsp;
+    </td>
+  </tr>
+</table>
 
 ---
 
