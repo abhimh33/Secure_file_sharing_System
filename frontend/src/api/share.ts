@@ -45,20 +45,41 @@ export const shareApi = {
   },
 
   downloadViaShareLink: async (token: string, password?: string): Promise<{ blob: Blob; filename: string }> => {
-    const response = await api.get(`/share/${token}/download`, {
-      responseType: 'blob',
-      params: password ? { password } : undefined,
-    });
-    // Extract filename from content-disposition header
-    const contentDisposition = response.headers['content-disposition'];
-    let filename = 'download';
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch && filenameMatch[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, '');
+    try {
+      const response = await api.get(`/share/${token}/download`, {
+        responseType: 'blob',
+        params: password ? { password } : undefined,
+      });
+      // Extract filename from content-disposition header
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'download';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=(['"].*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
       }
+      return { blob: response.data, filename };
+    } catch (error: unknown) {
+      // When responseType is 'blob', error response data is a Blob — parse it to extract the JSON detail
+      if (typeof error === 'object' && error !== null && 'response' in error) {
+        const axiosErr = error as { response?: { data?: Blob; status?: number } };
+        if (axiosErr.response?.data instanceof Blob) {
+          try {
+            const text = await axiosErr.response.data.text();
+            const json = JSON.parse(text);
+            if (json.detail) {
+              throw new Error(json.detail);
+            }
+          } catch (parseErr) {
+            if (parseErr instanceof Error && parseErr.message !== 'Unexpected token') {
+              throw parseErr;
+            }
+          }
+        }
+      }
+      throw error;
     }
-    return { blob: response.data, filename };
   },
 
   revokeShareLink: async (linkId: number | string): Promise<void> => {

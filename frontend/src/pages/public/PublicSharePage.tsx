@@ -10,6 +10,10 @@ import {
   Shield,
   CheckCircle,
   HardDrive,
+  Clock,
+  Ban,
+  ShieldX,
+  KeyRound,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { shareApi, getErrorMessage } from '../../api';
@@ -26,6 +30,82 @@ export default function PublicSharePage() {
     enabled: !!token,
     retry: false,
   });
+
+  // Classify error into a specific type for user-friendly display
+  const classifyError = (error: unknown): { type: string; title: string; message: string; icon: 'expired' | 'limit' | 'password' | 'restricted' | 'generic' } => {
+    const raw = (error instanceof Error ? error.message : getErrorMessage(error)).toLowerCase();
+
+    if (raw.includes('expired') || raw.includes('not found or expired')) {
+      return {
+        type: 'expired',
+        title: 'Link Expired',
+        message: 'This share link has expired and is no longer available. Please ask the file owner to create a new share link.',
+        icon: 'expired',
+      };
+    }
+    if (raw.includes('download limit') || raw.includes('limit reached')) {
+      return {
+        type: 'limit',
+        title: 'Download Limit Reached',
+        message: 'This file has reached its maximum number of downloads. Please contact the file owner to generate a new share link with additional downloads.',
+        icon: 'limit',
+      };
+    }
+    if (raw.includes('invalid password') || raw.includes('password required')) {
+      return {
+        type: 'password',
+        title: 'Incorrect Password',
+        message: 'The password you entered is incorrect. Please check with the file owner and try again.',
+        icon: 'password',
+      };
+    }
+    if (raw.includes('restricted') || raw.includes('specific user') || raw.includes('authentication required')) {
+      return {
+        type: 'restricted',
+        title: 'Access Restricted',
+        message: 'You do not have permission to access this file. This link is restricted to an authorized user.',
+        icon: 'restricted',
+      };
+    }
+    return {
+      type: 'generic',
+      title: 'Download Failed',
+      message: raw || 'Something went wrong while downloading. Please try again later or contact the file owner.',
+      icon: 'generic',
+    };
+  };
+
+  const errorIconMap = {
+    expired: <Clock className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />,
+    limit: <Ban className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />,
+    password: <KeyRound className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />,
+    restricted: <ShieldX className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />,
+    generic: <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />,
+  };
+
+  const errorStyleMap: Record<string, string> = {
+    expired: 'bg-amber-50 border-amber-200',
+    limit: 'bg-orange-50 border-orange-200',
+    password: 'bg-red-50 border-red-200',
+    restricted: 'bg-red-50 border-red-200',
+    generic: 'bg-red-50 border-red-200',
+  };
+
+  const errorTitleColorMap: Record<string, string> = {
+    expired: 'text-amber-800',
+    limit: 'text-orange-800',
+    password: 'text-red-800',
+    restricted: 'text-red-800',
+    generic: 'text-red-800',
+  };
+
+  const errorMsgColorMap: Record<string, string> = {
+    expired: 'text-amber-700',
+    limit: 'text-orange-700',
+    password: 'text-red-600',
+    restricted: 'text-red-600',
+    generic: 'text-red-600',
+  };
 
   const downloadMutation = useMutation({
     mutationFn: () =>
@@ -44,13 +124,11 @@ export default function PublicSharePage() {
       toast.success('Download started!');
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error);
-      if (message.toLowerCase().includes('password')) {
-        toast.error('Invalid password');
-      } else if (message.toLowerCase().includes('download limit')) {
-        toast.error('Download limit reached. Contact the file owner.');
+      const classified = classifyError(error);
+      if (classified.type === 'password') {
+        toast.error(classified.title);
       } else {
-        toast.error(message);
+        toast.error(classified.title);
       }
     },
   });
@@ -101,22 +179,31 @@ export default function PublicSharePage() {
   }
 
   if (infoError) {
-    // Check if it's a download limit error
-    const errorMessage = getErrorMessage(infoError);
-    const isDownloadLimitReached = errorMessage.toLowerCase().includes('download limit');
-    
+    const classified = classifyError(infoError);
+
+    const fullPageIconMap: Record<string, React.ReactNode> = {
+      expired: <Clock className="w-16 h-16 text-amber-500 mx-auto mb-4" />,
+      limit: <Ban className="w-16 h-16 text-orange-500 mx-auto mb-4" />,
+      password: <KeyRound className="w-16 h-16 text-red-500 mx-auto mb-4" />,
+      restricted: <ShieldX className="w-16 h-16 text-red-500 mx-auto mb-4" />,
+      generic: <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />,
+    };
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="card max-w-md w-full p-8 text-center">
-          <AlertCircle className={`w-16 h-16 mx-auto mb-4 ${isDownloadLimitReached ? 'text-amber-500' : 'text-red-500'}`} />
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            {isDownloadLimitReached ? 'Download Limit Reached' : 'Link Not Available'}
+          {fullPageIconMap[classified.icon]}
+          <h1 className="text-xl font-semibold text-gray-900 mb-3">
+            {classified.title}
           </h1>
-          <p className="text-gray-500">
-            {isDownloadLimitReached 
-              ? 'Maximum download reached! Please contact Admin.'
-              : 'This share link has expired or been revoked.'}
+          <p className="text-gray-500 leading-relaxed">
+            {classified.message}
           </p>
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-400">
+              If you believe this is a mistake, please contact the person who shared this link with you.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -221,24 +308,26 @@ export default function PublicSharePage() {
             </button>
 
             {/* Error Display */}
-            {downloadMutation.isError &&
-              !getErrorMessage(downloadMutation.error)
-                .toLowerCase()
-                .includes('password') && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            {downloadMutation.isError && (() => {
+              const errInfo = classifyError(downloadMutation.error);
+              // Don't show inline for password errors (toast is enough)
+              if (errInfo.type === 'password') return null;
+              return (
+                <div className={`mt-4 p-4 border rounded-lg ${errorStyleMap[errInfo.icon]}`}>
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    {errorIconMap[errInfo.icon]}
                     <div>
-                      <h4 className="font-medium text-red-800">
-                        Download Failed
+                      <h4 className={`font-medium ${errorTitleColorMap[errInfo.icon]}`}>
+                        {errInfo.title}
                       </h4>
-                      <p className="text-sm text-red-600 mt-1">
-                        {getErrorMessage(downloadMutation.error)}
+                      <p className={`text-sm mt-1 ${errorMsgColorMap[errInfo.icon]}`}>
+                        {errInfo.message}
                       </p>
                     </div>
                   </div>
                 </div>
-              )}
+              );
+            })()}
 
             {/* Info Box */}
             <div className="mt-6 text-center text-sm text-gray-500">
