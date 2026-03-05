@@ -124,3 +124,31 @@ Thumbs.db
 *.sqlite3
 *.db
 logs/
+
+# Local env overrides
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# Secrets & Certificates
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# Temp / backup files
+*.bak
+*.tmp
+*.temp
+*.orig
+*.swp~
+
+# Docker local overrides
+docker-compose.override.yml
+
+# Uploads / local storage
+uploads/
+storage/
